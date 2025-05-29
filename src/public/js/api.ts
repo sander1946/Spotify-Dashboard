@@ -1,4 +1,4 @@
-import { config } from "./config";
+import { config } from "./config.js";
 
 export interface SpotifyTokenResponse {
   access_token: string; // The access token that can be used to make requests to the Spotify Web API.
@@ -336,15 +336,16 @@ export async function getUserData(): Promise<SpotifyUser> {
 }
 
 export async function getPlaybackState(): Promise<SpotifyPlaybackState> {
-  const body = new URLSearchParams({
+  const URLParams = new URLSearchParams({
     market: 'NL',
     additional_types: 'track,episode',
   });
 
-  const response = await fetch("https://api.spotify.com/v1/me/player", {
+  const url = `https://api.spotify.com/v1/me/player?${URLParams.toString()}`;
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
-    body: body
   });
 
   if (!response.ok) {
@@ -452,15 +453,16 @@ export async function getAvailableDevices(): Promise<SpotifyDeviceObject[]> {
 }
 
 export async function getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayingTrack> {
-  const body = new URLSearchParams({
+  const URLParams = new URLSearchParams({
     market: 'NL',
     additional_types: 'track,episode',
   });
 
-  const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+  const url = `https://api.spotify.com/v1/me/player?${URLParams.toString()}`;
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
-    body: body
   });
 
   if (!response.ok) {
@@ -507,10 +509,14 @@ export async function startResumePlayback(options: SpotifyPlaybackOptions): Prom
     position_ms: options.position_ms,
   });
 
-  const URLParams = new URLSearchParams({ 
-    device_id: options.device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/play?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/play";
+  const URLParams = new URLSearchParams({});
+  
+  if (options.device_id) {
+    URLParams.append('device_id', options.device_id); // Ensure playback starts
+    url += `?${URLParams.toString()}`;
+  }
+  
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -549,10 +555,13 @@ export async function startResumePlayback(options: SpotifyPlaybackOptions): Prom
 }
 
 export async function pausePlayback(device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/pause?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/pause";
+  const URLParams = new URLSearchParams({});
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+    url += `?${URLParams.toString()}`;
+  }
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -589,13 +598,16 @@ export async function pausePlayback(device_id: string | null = null): Promise<vo
 }
 
 export async function skipToNext(device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/next?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/next";
+  const URLParams = new URLSearchParams({});
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+    url += `?${URLParams.toString()}`;
+  }
 
   const response = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + config.currentToken.access_token,
     },
@@ -629,13 +641,16 @@ export async function skipToNext(device_id: string | null = null): Promise<void>
 }
 
 export async function skipToPrevious(device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/previous?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/previous";
+  const URLParams = new URLSearchParams({});
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+    url += `?${URLParams.toString()}`;
+  }
 
   const response = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + config.currentToken.access_token,
     },
@@ -669,11 +684,18 @@ export async function skipToPrevious(device_id: string | null = null): Promise<v
 }
 
 export async function seekToPosition(position_ms: number, device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    position_ms: position_ms.toString(),
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/seek?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/seek";
+  const URLParams = new URLSearchParams({});
+  if (position_ms < 0) {
+    throw new Error("Position in milliseconds must be a non-negative integer.");
+  }
+  URLParams.append('position_ms', position_ms.toString());
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -710,11 +732,15 @@ export async function seekToPosition(position_ms: number, device_id: string | nu
 }
 
 export async function setRepeatMode(state: string, device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    state: state,
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/repeat?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/repeat";
+  const URLParams = new URLSearchParams({});
+  URLParams.append('state', state);
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -751,11 +777,15 @@ export async function setRepeatMode(state: string, device_id: string | null = nu
 }
 
 export async function setPlaybackVolume(volume_percent: number, device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    volume_percent: volume_percent.toString(),
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/volume?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/volume";
+  const URLParams = new URLSearchParams({});
+  URLParams.append('volume_percent', volume_percent.toString());
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -792,11 +822,15 @@ export async function setPlaybackVolume(volume_percent: number, device_id: strin
 }
 
 export async function togglePlaybackState(state: string, device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    state: state,
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/shuffle?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/shuffle";
+  const URLParams = new URLSearchParams({});
+  URLParams.append('state', state);
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -833,16 +867,18 @@ export async function togglePlaybackState(state: string, device_id: string | nul
 }
 
 export async function getRecentlyPlayedTracks(limit: string = "50"): Promise<SpotifyRecentlyPlayedTrack> {
-  const body = new URLSearchParams({ 
+  let url = "https://api.spotify.com/v1/me/player/recently-played";
+  const URLParams = new URLSearchParams({ 
     limit: limit, // Default limit, can be adjusted
-    before: '', // Optional, can be used for pagination
-    after: '', // Optional, can be used for pagination
+    // before: '', // Optional, can be used for pagination
+    // after: '', // Optional, can be used for pagination
   });
 
-  const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+  url += `?${URLParams.toString()}`;
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
-    body: body
   });
 
   if (!response.ok) {
@@ -908,14 +944,18 @@ export async function getUserQueue(): Promise<SpotifyUserQueue> {
 }
 
 export async function addItemToPlaybackQueue(uri: string, device_id: string | null = null): Promise<void> {
-  const URLParams = new URLSearchParams({ 
-    uri: uri,
-    device_id: device_id || ''
-  });
-  const url = `https://api.spotify.com/v1/me/player/queue?${URLParams.toString()}`;
+  let url = "https://api.spotify.com/v1/me/player/queue";
+  const URLParams = new URLSearchParams({});
+  URLParams.append('uri', uri);
+  
+  if (device_id) {
+    URLParams.append('device_id', device_id); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
 
   const response = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + config.currentToken.access_token,
     },
