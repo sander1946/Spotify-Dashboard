@@ -5,11 +5,12 @@
   "scope": "/",
   "dir": "ltr",
   "id": "/",
-  "start_url": "app",
+  "start_url": "/",
   "display": "minimal-ui",
   "background_color": "#000000",
   "theme_color": "#32d860",
   "orientation": "landscape-primary",
+  "description": "A web application to manage and visualize your Spotify playlists and music.",
   "icons": [
     {
       "src": "/img/icons/icon-16x16.png",
