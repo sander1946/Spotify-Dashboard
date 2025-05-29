@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  spotify-dashboard:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./dist:/app/dist
+      - ./App.py:/app/App.py
+      - ./manifest.webmanifest:/app/manifest.webmanifest
+      - ./robots.txt:/app/robots.txt
+    environment:
+      - PYTHONUNBUFFERED=1

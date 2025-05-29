@@ -2,61 +2,61 @@
   "name": "Spotify Dashboard",
   "short_name": "Spotify Dashboard",
   "lang": "en-US",
-  "scope": "/app",
+  "scope": "/",
   "dir": "ltr",
   "id": "/",
-  "start_url": "app/app.html",
+  "start_url": "app",
   "display": "minimal-ui",
   "background_color": "#000000",
   "theme_color": "#32d860",
   "orientation": "landscape-primary",
   "icons": [
     {
-      "src": "/public/img/icons/icon-16x16.png",
+      "src": "/img/icons/icon-16x16.png",
       "type": "image/png", "sizes": "16x16"
     },
     {
-      "src": "/public/img/icons/icon-32x32.png",
+      "src": "/img/icons/icon-32x32.png",
       "type": "image/png", "sizes": "32x32"
     },
     {
-      "src": "/public/img/icons/icon-64x64.png",
+      "src": "/img/icons/icon-64x64.png",
       "type": "image/png", "sizes": "64x64"
     },
     {
-      "src": "/public/img/icons/icon-72x72.png",
+      "src": "/img/icons/icon-72x72.png",
       "type": "image/png", "sizes": "72x72"
     },
     {
-      "src": "/public/img/icons/icon-96x96.png",
+      "src": "/img/icons/icon-96x96.png",
       "type": "image/png", "sizes": "96x96"
     },
     {
-      "src": "/public/img/icons/icon-128x128.png",
+      "src": "/img/icons/icon-128x128.png",
       "type": "image/png","sizes": "128x128"
     },
     {
-      "src": "/public/img/icons/icon-144x144.png",
+      "src": "/img/icons/icon-144x144.png",
       "type": "image/png", "sizes": "144x144"
     },
     {
-      "src": "/public/img/icons/icon-152x152.png",
+      "src": "/img/icons/icon-152x152.png",
       "type": "image/png", "sizes": "152x152"
     },
     {
-      "src": "/public/img/icons/icon-192x192.png",
+      "src": "/img/icons/icon-192x192.png",
       "type": "image/png", "sizes": "192x192"
     },
     {
-      "src": "/public/img/icons/icon-384x384.png",
+      "src": "/img/icons/icon-384x384.png",
       "type": "image/png", "sizes": "384x384"
     },
     {
-      "src": "/public/img/icons/icon-512x512.png",
+      "src": "/img/icons/icon-512x512.png",
       "type": "image/png", "sizes": "512x512"
     },
     {
-      "src": "/public/img/icons/icon-768x768.png",
+      "src": "/img/icons/icon-768x768.png",
       "type": "image/png", "sizes": "768x768"
     }
   ],
@@ -65,10 +65,10 @@
       "name": "Playlists",
       "short_name": "Playlists",
       "description": "View your playlists",
-      "url": "/app/playlists.html",
+      "url": "/playlists",
       "icons": [
         {
-          "src": "/public/img/icons/icon-64x64.png",
+          "src": "/img/icons/icon-64x64.png",
           "type": "image/png", "sizes": "64x64"
         }
       ]
@@ -77,10 +77,10 @@
       "name": "Search",
       "short_name": "Search",
       "description": "Search for music",
-      "url": "/app/search.html",
+      "url": "/search",
       "icons": [
         {
-          "src": "/public/img/icons/icon-64x64.png",
+          "src": "/img/icons/icon-64x64.png",
           "type": "image/png", "sizes": "64x64"
         }
       ]
@@ -89,10 +89,10 @@
       "name": "Settings",
       "short_name": "Settings",
       "description": "Settings for the app",
-      "url": "/app/settings.html",
+      "url": "/settings",
       "icons": [
         {
-          "src": "/public/img/icons/icon-64x64.png",
+          "src": "/img/icons/icon-64x64.png",
           "type": "image/png", "sizes": "64x64"
         }
       ]

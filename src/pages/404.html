@@ -34,24 +34,39 @@
       <nav class="navbar">
         <h1>Spotify Dashboard</h1>
         <ul>
-          <li><a href="/app/app.html">Home</a></li>
-          <li><a href="/app/search.html">Search</a></li>
-          <li><a href="/app/playlists.html">Playlists</a></li>
-          <li><a href="/app/settings.html">Settings</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/search">Search</a></li>
+          <li><a href="/playlists">Playlists</a></li>
+          <li><a href="/settings">Settings</a></li>
         </ul>
       </nav>
 
       <div class="content">
-        <h2>Welcome to the Spotify Dashboard</h2>
-        <p>This is a Progressive Web App that simulates a Spotify dashboard using the Spotify Web SDK and API.</p>
-        <p>Use the navigation menu to explore different sections of the app.</p>
+        <h1>Looks like you took a wrong turn</h1>
+        <p>We couldn't find the page you were looking for.</p>
+        <p>Maybe you can try going back to the <a href="/">home page</a> or use the navigation menu to find what you need.</p>
+        <p>If you think this is an error, please contact the site administrator.</p>
+        <p>Thank you for your understanding!</p>
+        <p>Enjoy your music!</p>
       </div>
+
+      <div class="player">
+        <div class="player-controls">
+          <button id="prev">Prev</button>
+          <button id="play">Play</button>
+          <button id="next">Next</button>
+        </div>
+        <div class="track-info
 
       <footer class="footer">
 
       </footer>
 
     </main>
+
+    <!-- This is for the spotify SDK -->
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script src="/public/js/app.js"></script>
+    <script src="/public/js/player.js"></script>
   </body>
 </html>
