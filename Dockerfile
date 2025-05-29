@@ -1,4 +1,4 @@
-FROM node:18-slim AS build
+FROM node:24-slim AS build
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN npm install -g typescript
 RUN tsc
 
 # Python runtime stage
-FROM python:3.11-slim
+FROM python:alpine
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # COPY dist ./dist
 
 # Expose port
-EXPOSE 8000
+EXPOSE 80
 
 # Start FastAPI with Uvicorn
-CMD ["uvicorn", "App:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "App:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
