@@ -9,7 +9,7 @@ app = FastAPI()
 # Allow CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost", "http://localhost:3000", "https://dash.sander1946.com", "https://accounts.spotify.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
