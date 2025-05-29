@@ -2,7 +2,26 @@
 export const config = {
   clientId: "1bc7010945b249b29d1f15137b05cff8",
   redirectUrl: 'https://dash.sander1946.com/callback/',
-  scope: 'user-read-private user-read-email',
+  scope: `
+  user-read-private
+  user-read-email
+  user-read-playback-state
+  user-modify-playback-state
+  user-read-recently-played
+  user-read-currently-playing
+  user-top-read
+  user-library-read
+  user-library-modify
+  playlist-read-private
+  playlist-read-collaborative
+  playlist-modify-public
+  playlist-modify-private
+  streaming
+  app-remote-control
+  user-follow-read
+  user-follow-modify
+  user-read-playback-position
+  `,
 
   // spotify API endpoints
   authorizationEndpoint: "https://accounts.spotify.com/authorize",
