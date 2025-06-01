@@ -26,6 +26,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <link rel="icon" href="/img/icons/favicon.ico" />
     <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/elements/spotify-player.css" />
     <title>Home</title>
   </head>
   <body>
@@ -41,7 +42,10 @@
         </ul>
       </nav>
 
+      <div id="spotify-player"></div>
+
       <div class="content">
+
         <!-- there are the target area's -->
         <div id="main">
 
@@ -49,6 +53,14 @@
         <div id="oauth">
 
         </div>
+
+        <div id="playback-state">
+          
+        </div>
+        <div class="meter">
+          <span style="width:80; border-radius: 7px;"><span id="progress-bar"></span></span>
+        </div>
+
 
         <!-- these are the templates to load -->
         <template id="login">
@@ -126,5 +138,6 @@
     </main>
 
     <script type="module" src="/js/app.js"></script>
+    <script type="module" src="/js/elements/spotify-player.js"></script>
   </body>
 </html>

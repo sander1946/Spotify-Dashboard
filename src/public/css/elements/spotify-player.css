@@ -1,0 +1,39 @@
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+@import '../variables.css';
+
+
+#spotify-player {
+  background-image: var(--content-color-gradient);
+  border-radius: 7px;
+}
+
+#spotify-player button {
+  background-image: var(--content-color-gradient);
+  color: var(--text-primary-color);
+  border: none;
+  padding: 5px;
+  margin: 0 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  min-height: 16px;
+  aspect-ratio: 1/1;
+  min-width: 16px;
+}
+
+#spotify-player button i {
+  font-size: 1.4rem;
+  color: var(--text-primary-color);
+}
+
+#spotify-player button[data-state="active"] i {
+  font-size: 1.4rem;
+  color: var(--button-active-color);
+}
+
+#spotify-player .info-container span {
+  display: block;
+}
+
+#spotify-player .info-container a {
+  display: block;
+}

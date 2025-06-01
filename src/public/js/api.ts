@@ -235,6 +235,16 @@ export interface SpotifyUserQueue {
   queue: (SpotifyTrackObject | SpotifyEpisodeObject)[]; // The user's queue, which is an array of tracks or episodes.
 }
 
+export interface SpotifyUserTopItems {
+  href: string; // A link to the Web API endpoint returning the full result of the request
+  limit: number; // The maximum number of items in the response, as specified in the request.
+  next?: string; // The URL to the next page of items. If this is null, there are no more items.
+  offset: number; // The offset of the items returned in the response, as specified in the request.
+  previous?: string; // The URL to the previous page of items. If this is null, there are no previous items.
+  total: number; // The total number of items available in the response.
+  items: (SpotifyTrackObject | SpotifyArtistObject)[]; // An array of the user's top items, which can be tracks or artists.
+}
+
 export async function redirectToSpotifyAuthorize(): Promise<void> {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const randomValues = crypto.getRandomValues(new Uint8Array(64));
@@ -301,7 +311,7 @@ export async function refreshToken(): Promise<SpotifyTokenResponse> {
   return await response.json();
 }
 
-export async function getUserData(): Promise<SpotifyUser> {
+export async function getUserData(): Promise<SpotifyUser | null> {
   const response = await fetch("https://api.spotify.com/v1/me", {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
@@ -332,10 +342,13 @@ export async function getUserData(): Promise<SpotifyUser> {
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
   }
+  if (response.status === 204) {
+    return null;
+  }
   return await response.json();
 }
 
-export async function getPlaybackState(): Promise<SpotifyPlaybackState> {
+export async function getPlaybackState(): Promise<SpotifyPlaybackState | null> {
   const URLParams = new URLSearchParams({
     market: 'NL',
     additional_types: 'track,episode',
@@ -372,6 +385,9 @@ export async function getPlaybackState(): Promise<SpotifyPlaybackState> {
       default:
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
+  }
+  if (response.status === 204) {
+    return null;
   }
   return await response.json();
 }
@@ -418,7 +434,7 @@ export async function transferPlayback(deviceId: string): Promise<void> {
   }
 }
 
-export async function getAvailableDevices(): Promise<SpotifyDeviceObject[]> {
+export async function getAvailableDevices(): Promise<SpotifyDeviceObject[] | null> {
   const response = await fetch("https://api.spotify.com/v1/me/player/devices", {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
@@ -449,10 +465,13 @@ export async function getAvailableDevices(): Promise<SpotifyDeviceObject[]> {
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
   }
+  if (response.status === 204) {
+    return null;
+  }
   return await response.json();
 }
 
-export async function getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayingTrack> {
+export async function getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayingTrack | null> {
   const URLParams = new URLSearchParams({
     market: 'NL',
     additional_types: 'track,episode',
@@ -489,6 +508,9 @@ export async function getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayin
       default:
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
+  }
+  if (response.status === 204) {
+    return null;
   }
   return await response.json();
 }
@@ -821,10 +843,10 @@ export async function setPlaybackVolume(volume_percent: number, device_id: strin
   }
 }
 
-export async function togglePlaybackState(state: string, device_id: string | null = null): Promise<void> {
+export async function setShuffle(state: boolean, device_id: string | null = null): Promise<void> {
   let url = "https://api.spotify.com/v1/me/player/shuffle";
   const URLParams = new URLSearchParams({});
-  URLParams.append('state', state);
+  URLParams.append('state', state.toString());
   
   if (device_id) {
     URLParams.append('device_id', device_id); // Ensure playback starts
@@ -851,7 +873,7 @@ export async function togglePlaybackState(state: string, device_id: string | nul
         }
         config.currentToken.save(newToken);
         // Retry the request with the new token
-        return togglePlaybackState(state, device_id);
+        return setShuffle(state, device_id);
       case 403:
         throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
       case 404:
@@ -866,7 +888,7 @@ export async function togglePlaybackState(state: string, device_id: string | nul
   }
 }
 
-export async function getRecentlyPlayedTracks(limit: string = "50"): Promise<SpotifyRecentlyPlayedTrack> {
+export async function getRecentlyPlayedTracks(limit: string = "50"): Promise<SpotifyRecentlyPlayedTrack | null> {
   let url = "https://api.spotify.com/v1/me/player/recently-played";
   const URLParams = new URLSearchParams({ 
     limit: limit, // Default limit, can be adjusted
@@ -906,10 +928,13 @@ export async function getRecentlyPlayedTracks(limit: string = "50"): Promise<Spo
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
   }
+  if (response.status === 204) {
+    return null;
+  }
   return await response.json();
 }
 
-export async function getUserQueue(): Promise<SpotifyUserQueue> {
+export async function getUserQueue(): Promise<SpotifyUserQueue | null> {
   const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
@@ -939,6 +964,9 @@ export async function getUserQueue(): Promise<SpotifyUserQueue> {
       default:
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
+  }
+  if (response.status === 204) {
+    return null;
   }
   return await response.json();
 }
@@ -986,4 +1014,63 @@ export async function addItemToPlaybackQueue(uri: string, device_id: string | nu
         throw new Error(`Unexpected error: ${response.statusText}`);
     }
   }
+}
+  
+  export async function getUsersTopItems(type: string, timeRange: string, limit: number, offset: number): Promise<SpotifyUserTopItems | null> {
+  let url = "https://api.spotify.com/v1/me/top/" + type; // type can be 'artists' or 'tracks'
+  if (!['artists', 'tracks'].includes(type)) {
+    throw new Error("Invalid type specified. Must be 'artists' or 'tracks'.");
+  }
+
+  const URLParams = new URLSearchParams({});
+  if (timeRange) {
+    URLParams.append('timeRange', timeRange); // Ensure playback starts
+  }
+
+  if (limit) {
+    URLParams.append('limit', limit.toString()); // Ensure playback starts
+  }
+
+  if (offset) {
+    URLParams.append('offset', offset.toString()); // Ensure playback starts
+  }
+
+  url += `?${URLParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + config.currentToken.access_token,
+    },
+  });
+
+  if (!response.ok) {
+    switch (response.status) {
+      case 400:
+        throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
+      case 401:
+        // Token might be expired, handle re-authentication
+        const newToken = await refreshToken();
+        if (!newToken.access_token) {
+          throw new Error("Failed to refresh token");
+        }
+        config.currentToken.save(newToken);
+        // Retry the request with the new token
+        return getUsersTopItems(type, timeRange, limit, offset);
+      case 403:
+        throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
+      case 404:
+        throw new Error("Not found: The requested resource could not be found.");
+      case 429:
+        throw new Error("Rate limit exceeded: Too many requests made to the API.");
+      case 500:
+        throw new Error("Internal server error: An error occurred on the server.");
+      default:
+        throw new Error(`Unexpected error: ${response.statusText}`);
+    }
+  }
+  if (response.status === 204) {
+    return null;
+  }
+  return await response.json();
 }

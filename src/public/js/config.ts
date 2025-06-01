@@ -1,8 +1,11 @@
+import { SpotifyPlayer } from "./elements/spotify-player";
+
 // config
 export const config = {
   clientId: "1bc7010945b249b29d1f15137b05cff8",
   redirectUrl: 'https://dash.sander1946.com/',
   scope: 'ugc-image-upload user-read-playback-state user-modify-playback-state user-read-currently-playing streaming playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-follow-modify user-follow-read user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read user-read-email user-read-private',
+  defaultAlbumImage: 'https://dash.sander1946.com/img/defaultAlbumImage.png',
 
   // spotify API endpoints
   authorizationEndpoint: "https://accounts.spotify.com/authorize",

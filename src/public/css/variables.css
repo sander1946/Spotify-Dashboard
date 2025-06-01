@@ -1,0 +1,11 @@
+:root {
+  --content-primary-color: #121212;
+  --content-secondary-color: #2a2a2a;
+  --content-color-gradient: linear-gradient(
+      var(--content-secondary-color),
+      var(--content-primary-color));
+  --text-primary-color: #ffffff;
+  --text-secondary-color: #7c7c7c;
+  --background-color: #000000;
+  --button-active-color: #2dc055;
+}

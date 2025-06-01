@@ -2,8 +2,10 @@ import {
   getToken, getUserData, redirectToSpotifyAuthorize, refreshToken, SpotifyUser,
   getPlaybackState, transferPlayback, getAvailableDevices, getCurrentlyPlayingTrack,
   startResumePlayback, pausePlayback, skipToNext, skipToPrevious, seekToPosition,
-  setRepeatMode, setPlaybackVolume, togglePlaybackState, getRecentlyPlayedTracks,
-  getUserQueue, addItemToPlaybackQueue
+  setRepeatMode, setPlaybackVolume, setShuffle, getRecentlyPlayedTracks,
+  getUserQueue, addItemToPlaybackQueue,
+  getUsersTopItems,
+  SpotifyPlaybackState
 } from "./api.js";
 import { config } from "./config.js";
 
@@ -40,6 +42,11 @@ if (code) {
     // After token exchange, fetch user data and display
     if (config.currentToken.access_token) {
       const userData = await getUserData();
+      if (!userData) {
+        console.error("Failed to fetch user data after token exchange.");
+        displayLogin();
+        return;
+      }
       displayUserData(userData);
       displayTokenData(config.currentToken);
     }
@@ -47,6 +54,11 @@ if (code) {
 } else if (config.currentToken.access_token) {
   (async () => {
     const userData = await getUserData();
+    if (!userData) {
+      console.error("Failed to fetch user data on initial load.");
+      displayLogin();
+      return;
+    }
     displayUserData(userData);
     displayTokenData(config.currentToken);
   })();
@@ -114,6 +126,58 @@ function displayTokenData(token: typeof config.currentToken): void {
   `;
 }
 
+// function displayPlaybackState(playbackState: SpotifyPlaybackState): void {
+//   const playback_state = document.getElementById("playback-state") as HTMLDivElement | null;
+//   const progress_bar = document.getElementById("progress-bar") as HTMLSpanElement | null;
+//   if (progress_bar) {
+//     const progressMs = playbackState.progress_ms || 0;
+//     const durationMs = playbackState.item && playbackState.item.duration_ms ? playbackState.item.duration_ms : 1;
+//     progress_bar.style.width = `${(progressMs / durationMs) * 100}%`;
+//   }
+//   if (!playback_state) return;
+//   playback_state.innerHTML = `
+//     <h3>Playback State</h3>
+//     <p>Is Playing: ${playbackState.is_playing}</p>
+//     <p>Progress: ${playbackState.progress_ms} ms out of ${playbackState.item?.duration_ms} ms</p>
+//     <p>Device: ${playbackState.device ? `<strong>${playbackState.device.name}</strong> (${playbackState.device.type})` : "None"}</p>
+//     <p>Repeat Mode: ${playbackState.repeat_state}</p>
+//     <p>Shuffle State: ${playbackState.shuffle_state}</p>
+//     <p>Volume: ${playbackState.device ? playbackState.device.volume_percent + "%" : "N/A"}</p>
+//     <p>Timestamp: ${new Date(playbackState.timestamp).toLocaleString()}</p>
+//     <p>Context: ${
+//       playbackState.context
+//         ? `<strong>${playbackState.context.type}</strong> - ${playbackState.context.uri}`
+//         : "None"
+//     }</p>
+//     <p>Item: ${
+//       playbackState.item
+//         ? `<strong>${playbackState.item.name}</strong>${
+//             "artists" in playbackState.item && Array.isArray((playbackState.item as any).artists)
+//               ? " by " + (playbackState.item as any).artists.map((artist: any) => artist.name).join(", ")
+//               : ""
+//           }`
+//         : "None"
+//     }</p>
+//     <p>Item URI: ${playbackState.item ? playbackState.item.uri : "N/A"}</p>
+//     <p>Item ID: ${playbackState.item ? playbackState.item.id : "N/A"}</p>
+//     <p>Item Type: ${playbackState.item ? playbackState.item.type : "N/A"}</p>
+//     <p>Item External URLs: ${playbackState.item ? JSON.stringify(playbackState.item.external_urls) : "N/A"}</p>
+//     <p>Item Album Images: ${
+//       playbackState.item && playbackState.item.type === "track" && "album" in playbackState.item && playbackState.item.album
+//         ? playbackState.item.album.images && playbackState.item.album.images.length > 0
+//           ? `<img src="${playbackState.item.album.images[0].url}" alt="${playbackState.item.album.images[0].height}x${playbackState.item.album.images[0].width}" style="max-height: 500px; max-width: 500px;">`
+//         : "N/A"
+//         : "N/A"
+//     }</p>
+//     <p>Item Explicit: ${playbackState.item ? playbackState.item.explicit ? "Yes" : "No" : "N/A"}</p>
+//     <p>Item Popularity: ${
+//       playbackState.item && playbackState.item.type === "track"
+//         ? (playbackState.item as any).popularity || "N/A"
+//         : "N/A"
+//     }</p>
+//   `;
+// }
+
 // After displayTokenData, add API test UI
 function showApiTestUI() {
   let apiTestDiv = document.getElementById("api-test") as HTMLElement | null;
@@ -124,7 +188,7 @@ function showApiTestUI() {
   }
   apiTestDiv.innerHTML = `
     <hr>
-    <h3>API Test Panel</h3>
+    <h3>Player</h3>
     <button id="btn-get-playback-state">Get Playback State</button>
     <br>
     <button id="btn-get-available-devices">Get Available Devices</button>
@@ -165,7 +229,23 @@ function showApiTestUI() {
     <br>
     <input id="input-queue-uri" placeholder="URI to add to queue" />
     <button id="btn-add-to-queue">Add Item To Playback Queue</button>
+    <hr>
+    <h3>Users</h3>
+    <button id="btn-get-user-data">Get Current Users Data</button>
     <br>
+    <select type="text" id="input-top-user-type" placeholder="Entity Type">
+      <option value="tracks">Tracks</option>
+      <option value="artists" selected>Artists</option>
+    </select>
+    <select type="text" id="input-top-user-time-range" placeholder="Time Range">
+      <option value="short_term">Short Term</option>
+      <option value="medium_term" selected>Medium Term</option>
+      <option value="long_term">Long Term</option>
+    </select>
+    <input type="number" id="input-top-user-limit" placeholder="Limit" value="20" min="0" max="50" />
+    <input type="number" id="input-top-user-offset" placeholder="Offset" value="0" min="0"/>
+    <button id="btn-get-user-top-items">Get Current Users Top Items</button>
+
     <pre id="api-output" style="background:var(--content-secondary-color);max-height:300px;overflow:auto;"></pre>
   `;
 
@@ -222,8 +302,8 @@ function showApiTestUI() {
     try { await setPlaybackVolume(vol); printOutput("Set volume."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-toggle-shuffle") as HTMLButtonElement).onclick = async () => {
-    const state = (document.getElementById("input-shuffle-state") as HTMLInputElement).value;
-    try { await togglePlaybackState(state); printOutput("Toggled shuffle."); } catch (e) { printOutput(e); }
+    const state = (document.getElementById("input-shuffle-state") as HTMLInputElement).value === "true" ? true : false;
+    try { await setShuffle(state); printOutput("Toggled shuffle."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-recently-played") as HTMLButtonElement).onclick = async () => {
     const limit = (document.getElementById("input-recent-limit") as HTMLInputElement).value || "50";
@@ -235,6 +315,20 @@ function showApiTestUI() {
   (document.getElementById("btn-add-to-queue") as HTMLButtonElement).onclick = async () => {
     const uri = (document.getElementById("input-queue-uri") as HTMLInputElement).value;
     try { await addItemToPlaybackQueue(uri); printOutput("Added to queue."); } catch (e) { printOutput(e); }
+  };
+
+  // Users
+  (document.getElementById("btn-get-user-data") as HTMLButtonElement).onclick = async () => {
+    try { printOutput(await getUserData()); } catch (e) { printOutput(e); }
+  };
+  (document.getElementById("btn-get-user-top-items") as HTMLButtonElement).onclick = async () => {
+    const type = (document.getElementById("input-top-user-type") as HTMLSelectElement).value;
+    const timeRange = (document.getElementById("input-top-user-time-range") as HTMLSelectElement).value;
+    const limit = parseInt((document.getElementById("input-top-user-limit") as HTMLInputElement).value) || 20;
+    const offset = parseInt((document.getElementById("input-top-user-offset") as HTMLInputElement).value) || 0;
+    try { 
+      printOutput(await getUsersTopItems(type, timeRange, limit, offset)); 
+    } catch (e) { printOutput(e); }
   };
 }
 
