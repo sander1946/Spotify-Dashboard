@@ -197,6 +197,10 @@ export interface SpotifyDeviceObject {
   supports_volume: boolean; // If this device can be used to set the volume.
 }
 
+export interface SpotifyAvailableDeviceObject {
+  devices: SpotifyDeviceObject[]; // An array of available devices.
+}
+
 export interface SpotifyCurrentlyPlayingTrack {
   device: SpotifyDeviceObject; // The device that is currently active.
   repeat_state: string; // off, track, context
@@ -434,7 +438,7 @@ export async function transferPlayback(deviceId: string): Promise<void> {
   }
 }
 
-export async function getAvailableDevices(): Promise<SpotifyDeviceObject[] | null> {
+export async function getAvailableDevices(): Promise<SpotifyAvailableDeviceObject | null> {
   const response = await fetch("https://api.spotify.com/v1/me/player/devices", {
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
