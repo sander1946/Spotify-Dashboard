@@ -189,46 +189,34 @@ function showApiTestUI() {
   apiTestDiv.innerHTML = `
     <hr>
     <h3>Player</h3>
+    <button id="btn-get-user-queue">Get User Queue</button>
+    <br>
     <button id="btn-get-playback-state">Get Playback State</button>
     <br>
     <button id="btn-get-available-devices">Get Available Devices</button>
     <br>
+    <button id="btn-get-currently-playing">Get Currently Playing Track</button>
+    <br>
+    <input id="input-seek-ms" placeholder="Seek Position ms" type="number" />
+    <button id="btn-seek-to-position">Seek To Position</button>
+    <br>
     <input id="input-device-id" placeholder="Device ID" />
     <button id="btn-transfer-playback">Transfer Playback</button>
     <br>
-    <button id="btn-get-currently-playing">Get Currently Playing Track</button>
+    <input id="input-volume" placeholder="Volume %" type="number" min="0" max="100" />
+    <button id="btn-set-volume">Set Playback Volume</button>
+    <br>
+    <input id="input-recent-limit" placeholder="Recently Played Limit" type="number" />
+    <button id="btn-get-recently-played">Get Recently Played Tracks</button>
+    <br>
+    <input id="input-queue-uri" placeholder="URI to add to queue" />
+    <button id="btn-add-to-queue">Add Item To Playback Queue</button>
     <br>
     <input id="input-context-uri" placeholder="Context URI" />
     <input id="input-track-uris" placeholder="Track URIs (comma separated)" />
     <input id="input-offset" placeholder="Offset (number)" type="number" />
     <input id="input-position-ms" placeholder="Position ms" type="number" />
     <button id="btn-start-resume-playback">Start/Resume Playback</button>
-    <br>
-    <button id="btn-pause-playback">Pause Playback</button>
-    <br>
-    <button id="btn-skip-next">Skip To Next</button>
-    <br>
-    <button id="btn-skip-prev">Skip To Previous</button>
-    <br>
-    <input id="input-seek-ms" placeholder="Seek Position ms" type="number" />
-    <button id="btn-seek-to-position">Seek To Position</button>
-    <br>
-    <input id="input-repeat-mode" placeholder="Repeat Mode (track, context, off)" />
-    <button id="btn-set-repeat-mode">Set Repeat Mode</button>
-    <br>
-    <input id="input-volume" placeholder="Volume %" type="number" min="0" max="100" />
-    <button id="btn-set-volume">Set Playback Volume</button>
-    <br>
-    <input id="input-shuffle-state" placeholder="Shuffle (true/false)" />
-    <button id="btn-toggle-shuffle">Toggle Shuffle</button>
-    <br>
-    <input id="input-recent-limit" placeholder="Recently Played Limit" type="number" />
-    <button id="btn-get-recently-played">Get Recently Played Tracks</button>
-    <br>
-    <button id="btn-get-user-queue">Get User Queue</button>
-    <br>
-    <input id="input-queue-uri" placeholder="URI to add to queue" />
-    <button id="btn-add-to-queue">Add Item To Playback Queue</button>
     <hr>
     <h3>Users</h3>
     <button id="btn-get-user-data">Get Current Users Data</button>
@@ -280,30 +268,13 @@ function showApiTestUI() {
       printOutput("Started/resumed playback.");
     } catch (e) { printOutput(e); }
   };
-  (document.getElementById("btn-pause-playback") as HTMLButtonElement).onclick = async () => {
-    try { await pausePlayback(); printOutput("Paused playback."); } catch (e) { printOutput(e); }
-  };
-  (document.getElementById("btn-skip-next") as HTMLButtonElement).onclick = async () => {
-    try { await skipToNext(); printOutput("Skipped to next."); } catch (e) { printOutput(e); }
-  };
-  (document.getElementById("btn-skip-prev") as HTMLButtonElement).onclick = async () => {
-    try { await skipToPrevious(); printOutput("Skipped to previous."); } catch (e) { printOutput(e); }
-  };
   (document.getElementById("btn-seek-to-position") as HTMLButtonElement).onclick = async () => {
     const ms = parseInt((document.getElementById("input-seek-ms") as HTMLInputElement).value);
     try { await seekToPosition(ms); printOutput("Seeked to position."); } catch (e) { printOutput(e); }
   };
-  (document.getElementById("btn-set-repeat-mode") as HTMLButtonElement).onclick = async () => {
-    const mode = (document.getElementById("input-repeat-mode") as HTMLInputElement).value;
-    try { await setRepeatMode(mode); printOutput("Set repeat mode."); } catch (e) { printOutput(e); }
-  };
   (document.getElementById("btn-set-volume") as HTMLButtonElement).onclick = async () => {
     const vol = parseInt((document.getElementById("input-volume") as HTMLInputElement).value);
     try { await setPlaybackVolume(vol); printOutput("Set volume."); } catch (e) { printOutput(e); }
-  };
-  (document.getElementById("btn-toggle-shuffle") as HTMLButtonElement).onclick = async () => {
-    const state = (document.getElementById("input-shuffle-state") as HTMLInputElement).value === "true" ? true : false;
-    try { await setShuffle(state); printOutput("Toggled shuffle."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-recently-played") as HTMLButtonElement).onclick = async () => {
     const limit = (document.getElementById("input-recent-limit") as HTMLInputElement).value || "50";
