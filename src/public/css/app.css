@@ -50,7 +50,7 @@ h1 {
   border-radius: 7px;
 }
 
-#api-test button {
+#main button {
   background-image: var(--content-color-gradient);
   color: var(--text-primary-color);
   border: none;
@@ -59,12 +59,32 @@ h1 {
   cursor: pointer;
 }
 
+#api-test button {
+  background-image: var(--content-color-gradient);
+  color: var(--text-primary-color);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 203px;
+}
+
 #api-test input {
   background-image: var(--content-color-gradient);
   color: var(--text-primary-color);
   border: none;
   padding: 0.5rem;
   border-radius: 5px;
+  width: 203px;
+}
+
+#api-test select {
+  background-image: var(--content-color-gradient);
+  color: var(--text-primary-color);
+  border: none;
+  padding: 0.5rem;
+  border-radius: 5px;
+  width: 203px;
 }
 
 #progress-bar {
