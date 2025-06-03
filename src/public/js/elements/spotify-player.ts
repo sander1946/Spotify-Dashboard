@@ -1,4 +1,4 @@
-import { getPlaybackState, pausePlayback, seekToPosition, setPlaybackVolume, setRepeatMode, setShuffle, skipToNext, skipToPrevious, SpotifyPlaybackOptions, SpotifyPlaybackState, startResumePlayback } from "../api.js";
+import { getAvailableDevices, getPlaybackState, pausePlayback, seekToPosition, setPlaybackVolume, setRepeatMode, setShuffle, skipToNext, skipToPrevious, SpotifyPlaybackOptions, SpotifyPlaybackState, startResumePlayback, transferPlayback } from "../api.js";
 import { config } from "../config.js";
 
 export class SpotifyPlayer {
@@ -10,6 +10,7 @@ export class SpotifyPlayer {
   // containers
   private infoContainer: HTMLDivElement = document.createElement("div");
   private controlsContainer: HTMLDivElement = document.createElement("div");
+  private deviceSelectionContainer: HTMLDivElement = document.createElement("div");
 
   // playback state, this is what will be updated with the current playback state from Spotify
   private playbackState: SpotifyPlaybackState | null = null; // Placeholder for playback state
@@ -39,9 +40,12 @@ export class SpotifyPlayer {
   private nextButton: HTMLButtonElement = document.createElement("button");
   private previousButton: HTMLButtonElement = document.createElement("button");
   private volumeSlider: HTMLInputElement = document.createElement("input");
+  private volumeButton: HTMLButtonElement = document.createElement("button");
   private progressBar: HTMLInputElement = document.createElement("input");
   private repeatButton: HTMLButtonElement = document.createElement("button");
   private shuffleButton: HTMLButtonElement = document.createElement("button");
+  private shareButton: HTMLButtonElement = document.createElement("button");
+  private deviceSelectionButton: HTMLButtonElement = document.createElement("button");
 
   constructor() {
     this.setupElements();
@@ -80,19 +84,26 @@ export class SpotifyPlayer {
     this.volumeSlider.type = "range";
     this.volumeSlider.min = "0";
     this.volumeSlider.max = "100";
+    this.volumeSlider.style.display = "none"; // Initially hidden, can be shown later if needed
     this.progressBar.className = "progress-bar";
     this.progressBar.type = "range";
     this.progressBar.min = "0";
     this.progressBar.max = "100";
     this.repeatButton.className = "repeat-button";
     this.shuffleButton.className = "shuffle-button";
+    this.shareButton.className = "share-button";
+    this.volumeButton.className = "volume-button";
+    this.deviceSelectionButton.className = "device-selection-button";
     
     // Add text content to buttons
+    this.volumeButton.innerHTML = '<i class="bi bi-volume-up-fill"></i>';
     this.playButton.innerHTML = '<i class="bi bi-play-fill"></i>';
     this.nextButton.innerHTML = '<i class="bi bi-skip-end-fill"></i>';
     this.previousButton.innerHTML = '<i class="bi bi-skip-start-fill"></i>';
     this.repeatButton.innerHTML = '<i class="bi bi-repeat"></i>';
     this.shuffleButton.innerHTML = '<i class="bi bi-shuffle"></i>';
+    this.shareButton.innerHTML = '<i class="bi bi-box-arrow-up"></i>';
+    this.deviceSelectionButton.innerHTML = '<i class="bi bi-pc-display"></i>';
   }
 
   setupStructure() {
@@ -105,16 +116,22 @@ export class SpotifyPlayer {
 
     // Append controls to the controls container
     this.controlsContainer.appendChild(this.progressBar);
+    this.controlsContainer.appendChild(document.createElement("br")); // Line break for better layout
+    this.controlsContainer.appendChild(this.volumeButton);
+    this.controlsContainer.appendChild(this.volumeSlider); // this can be shown/hidden later
     this.controlsContainer.appendChild(this.shuffleButton);
     this.controlsContainer.appendChild(this.previousButton);
     this.controlsContainer.appendChild(this.playButton);
     this.controlsContainer.appendChild(this.nextButton);
     this.controlsContainer.appendChild(this.repeatButton);
-    this.controlsContainer.appendChild(this.volumeSlider);
+    this.controlsContainer.appendChild(this.shareButton);
+    this.controlsContainer.appendChild(document.createElement("br")); // Line break for better layout
+    this.controlsContainer.appendChild(this.deviceSelectionButton);
 
     // Append containers to the shadow root
     this.element.appendChild(this.infoContainer);
     this.element.appendChild(this.controlsContainer);
+    this.element.appendChild(this.deviceSelectionContainer);
   }
 
   afterButtonHandler() {
@@ -136,6 +153,7 @@ export class SpotifyPlayer {
     this.progressBar.addEventListener("input", (e) => this.seek((e.target as HTMLInputElement).value));
     this.repeatButton.addEventListener("click", () => this.toggleRepeat());
     this.shuffleButton.addEventListener("click", () => this.toggleShuffle());
+    this.deviceSelectionButton.addEventListener("click", () => this.showDeviceSelection());
   }
 
   updatePlayerInfo(state?: SpotifyPlaybackState | null) {
@@ -345,6 +363,49 @@ export class SpotifyPlayer {
       console.error("Error setting shuffle mode:", error);
     });
     this.afterButtonHandler(); // Poll the current state after toggling play
+  }
+
+  showDeviceSelection() {
+    console.log("Showing device selection");
+    getAvailableDevices().then((devices) => {
+      console.log("Available devices:", devices);
+      if (devices && devices.devices && devices.devices.length > 0) {
+        console.log("Available devices:", devices);
+        const deviceList = document.createElement("ul");
+        devices.devices.forEach((device) => {
+          const deviceItem = document.createElement("li");
+          switch (device.type) {
+            // case "Computer":
+            //   deviceItem.innerHTML = `<i class="bi bi-laptop"></i>${device.name} (${device.type})`;
+            //   break;
+            // case "Smartphone":
+            //   deviceItem.innerHTML = `<i class="bi bi-phone"></i>${device.name} (${device.type})`;
+            //   break;
+            // case "Speaker":
+            //   deviceItem.innerHTML = `<i class="bi bi-speaker"></i>${device.name} (${device.type})`;
+            //   break;
+            default:
+              deviceItem.innerHTML = `<i class="bi bi-device"></i>${device.name} (${device.type})`;
+              break;
+          };
+          deviceItem.addEventListener("click", () => {
+            // Logic to switch to the selected device
+            console.log(`Switching to device: ${device.name}`);
+            let currentDeviceId = device.id;
+            if (!currentDeviceId) {
+              return console.error("Device ID is required to transfer playback.");
+            }
+            transferPlayback(`${currentDeviceId}`);
+          });
+          deviceList.appendChild(deviceItem);
+        });
+        this.deviceSelectionContainer.innerHTML = ""; // Clear previous content
+        this.deviceSelectionContainer.appendChild(deviceList);
+      }
+    }).catch((error) => {
+      console.error("Error fetching available devices:", error);
+      this.deviceSelectionContainer.innerHTML = "<p>Error fetching devices. Please try again later.</p>";
+    });
   }
 }
 
