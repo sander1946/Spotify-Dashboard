@@ -1,13 +1,8 @@
 import { 
-  getToken, getUserData, redirectToSpotifyAuthorize, refreshToken, SpotifyUser,
-  getPlaybackState, transferPlayback, getAvailableDevices, getCurrentlyPlayingTrack,
-  startResumePlayback, pausePlayback, skipToNext, skipToPrevious, seekToPosition,
-  setRepeatMode, setPlaybackVolume, setShuffle, getRecentlyPlayedTracks,
-  getUserQueue, addItemToPlaybackQueue,
-  getUsersTopItems,
-  SpotifyPlaybackState
+  API
 } from "./api.js";
 import { config } from "./config.js";
+import { SpotifyUser } from "./interfaces.js";
 
 // TODO: check if this file is still needed, as spotify does not work offline yet
 // /**
@@ -29,7 +24,7 @@ const code = args.get('code');
 // If we find a code, we're in a callback, do a token exchange
 if (code) {
   (async () => {
-    const token = await getToken(code);
+    const token = await API.getToken(code);
     config.currentToken.save(token);
 
     // Remove code from URL so we can refresh correctly.
@@ -41,7 +36,7 @@ if (code) {
 
     // After token exchange, fetch user data and display
     if (config.currentToken.access_token) {
-      const userData = await getUserData();
+      const userData = await API.getUserData();
       if (!userData) {
         console.error("Failed to fetch user data after token exchange.");
         displayLogin();
@@ -53,7 +48,7 @@ if (code) {
   })();
 } else if (config.currentToken.access_token) {
   (async () => {
-    const userData = await getUserData();
+    const userData = await API.getUserData();
     if (!userData) {
       console.error("Failed to fetch user data on initial load.");
       displayLogin();
@@ -68,7 +63,7 @@ if (code) {
 
 // Click handlers
 async function loginWithSpotifyClick(): Promise<void> {
-  await redirectToSpotifyAuthorize();
+  await API.redirectToSpotifyAuthorize();
 }
 
 async function logoutClick(): Promise<void> {
@@ -77,7 +72,7 @@ async function logoutClick(): Promise<void> {
 }
 
 async function refreshTokenClick(): Promise<void> {
-  const token = await refreshToken();
+  const token = await API.refreshToken();
   config.currentToken.save(token);
   displayTokenData(config.currentToken);
 }
@@ -245,17 +240,17 @@ function showApiTestUI() {
 
   // Button handlers
   (document.getElementById("btn-get-playback-state") as HTMLButtonElement).onclick = async () => {
-    try { printOutput(await getPlaybackState()); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getPlaybackState()); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-available-devices") as HTMLButtonElement).onclick = async () => {
-    try { printOutput(await getAvailableDevices()); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getAvailableDevices()); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-transfer-playback") as HTMLButtonElement).onclick = async () => {
     const deviceId = (document.getElementById("input-device-id") as HTMLInputElement).value;
-    try { await transferPlayback(deviceId); printOutput("Transferred playback."); } catch (e) { printOutput(e); }
+    try { await API.transferPlayback(deviceId); printOutput("Transferred playback."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-currently-playing") as HTMLButtonElement).onclick = async () => {
-    try { printOutput(await getCurrentlyPlayingTrack()); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getCurrentlyPlayingTrack()); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-start-resume-playback") as HTMLButtonElement).onclick = async () => {
     const context_uri = (document.getElementById("input-context-uri") as HTMLInputElement).value || undefined;
@@ -264,33 +259,33 @@ function showApiTestUI() {
     const offset = offsetStr ? { position: parseInt(offsetStr) } : undefined;
     const position_ms = parseInt((document.getElementById("input-position-ms") as HTMLInputElement).value) || undefined;
     try { 
-      await startResumePlayback({ context_uri, uris: uris.length ? uris : undefined, offset, position_ms });
+      await API.startResumePlayback({ context_uri, uris: uris.length ? uris : undefined, offset, position_ms });
       printOutput("Started/resumed playback.");
     } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-seek-to-position") as HTMLButtonElement).onclick = async () => {
     const ms = parseInt((document.getElementById("input-seek-ms") as HTMLInputElement).value);
-    try { await seekToPosition(ms); printOutput("Seeked to position."); } catch (e) { printOutput(e); }
+    try { await API.seekToPosition(ms); printOutput("Seeked to position."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-set-volume") as HTMLButtonElement).onclick = async () => {
     const vol = parseInt((document.getElementById("input-volume") as HTMLInputElement).value);
-    try { await setPlaybackVolume(vol); printOutput("Set volume."); } catch (e) { printOutput(e); }
+    try { await API.setPlaybackVolume(vol); printOutput("Set volume."); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-recently-played") as HTMLButtonElement).onclick = async () => {
     const limit = (document.getElementById("input-recent-limit") as HTMLInputElement).value || "50";
-    try { printOutput(await getRecentlyPlayedTracks(limit)); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getRecentlyPlayedTracks(limit)); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-user-queue") as HTMLButtonElement).onclick = async () => {
-    try { printOutput(await getUserQueue()); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getUserQueue()); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-add-to-queue") as HTMLButtonElement).onclick = async () => {
     const uri = (document.getElementById("input-queue-uri") as HTMLInputElement).value;
-    try { await addItemToPlaybackQueue(uri); printOutput("Added to queue."); } catch (e) { printOutput(e); }
+    try { await API.addItemToPlaybackQueue(uri); printOutput("Added to queue."); } catch (e) { printOutput(e); }
   };
 
   // Users
   (document.getElementById("btn-get-user-data") as HTMLButtonElement).onclick = async () => {
-    try { printOutput(await getUserData()); } catch (e) { printOutput(e); }
+    try { printOutput(await API.getUserData()); } catch (e) { printOutput(e); }
   };
   (document.getElementById("btn-get-user-top-items") as HTMLButtonElement).onclick = async () => {
     const type = (document.getElementById("input-top-user-type") as HTMLSelectElement).value;
@@ -298,7 +293,7 @@ function showApiTestUI() {
     const limit = parseInt((document.getElementById("input-top-user-limit") as HTMLInputElement).value) || 20;
     const offset = parseInt((document.getElementById("input-top-user-offset") as HTMLInputElement).value) || 0;
     try { 
-      printOutput(await getUsersTopItems(type, timeRange, limit, offset)); 
+      printOutput(await API.getUsersTopItems(type, timeRange, limit, offset)); 
     } catch (e) { printOutput(e); }
   };
 }

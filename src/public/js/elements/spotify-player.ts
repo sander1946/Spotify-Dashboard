@@ -1,5 +1,6 @@
-import { getAvailableDevices, getPlaybackState, pausePlayback, seekToPosition, setPlaybackVolume, setRepeatMode, setShuffle, skipToNext, skipToPrevious, SpotifyPlaybackOptions, SpotifyPlaybackState, startResumePlayback, transferPlayback } from "../api.js";
+import { API } from "../api.js";
 import { config } from "../config.js";
+import { SpotifyPlaybackOptions, SpotifyPlaybackState } from "../interfaces.js";
 
 export class SpotifyPlayer {
   // Properties
@@ -268,7 +269,7 @@ export class SpotifyPlayer {
   play() {
     const options = {} as SpotifyPlaybackOptions;
 
-    startResumePlayback(options).then(() => {
+    API.startResumePlayback(options).then(() => {
       console.log("Playback started");
     }).catch((error) => {
       console.error("Error starting playback:", error);
@@ -277,7 +278,7 @@ export class SpotifyPlayer {
 
   pause() {
     // Send the pause command to Spotify
-    pausePlayback().then(() => {
+    API.pausePlayback().then(() => {
       console.log("Playback stopped");
     }).catch((error) => {
       console.error("Error starting stopping:", error);
@@ -286,7 +287,7 @@ export class SpotifyPlayer {
 
   next() {
     // Send the next track command to Spotify
-    skipToNext().then(() => {
+    API.skipToNext().then(() => {
       console.log("Skipped to next track");
     }).catch((error) => {
       console.error("Error skipping to next track:", error);
@@ -296,7 +297,7 @@ export class SpotifyPlayer {
 
   previous() {
     // Send the previous track command to Spotify
-    skipToPrevious().then(() => {
+    API.skipToPrevious().then(() => {
       console.log("Skipped to previous track");
     }).catch((error) => {
       console.error("Error skipping to previous track:", error);
@@ -311,7 +312,7 @@ export class SpotifyPlayer {
       console.error("Volume must be between 0 and 100");
       return;
     }
-    setPlaybackVolume(volumePercent).then(() => {
+    API.setPlaybackVolume(volumePercent).then(() => {
       console.log(`Volume set to: ${volumePercent}%`);
     }).catch((error) => {
       console.error("Error setting volume:", error);
@@ -322,7 +323,7 @@ export class SpotifyPlayer {
   seek(position: string) {
     // Send the seek command to Spotify
     const positionMs = parseInt(position, 10) * 1000; // Convert seconds to milliseconds
-    seekToPosition(positionMs).then(() => {
+    API.seekToPosition(positionMs).then(() => {
       console.log(`Seeked to position: ${positionMs} ms`);
     }).catch((error) => {
       console.error("Error seeking to position:", error);
@@ -344,7 +345,7 @@ export class SpotifyPlayer {
       this.repeatButton.getElementsByClassName("bi")[0].classList.replace("bi-repeat-1", "bi-repeat");
     }
     // Update the repeat state in Spotify
-    setRepeatMode(this.repeatState).then(() => {
+    API.setRepeatMode(this.repeatState).then(() => {
       console.log(`Repeat mode set to: ${this.repeatState}`);
     }).catch((error) => {
       console.error("Error setting repeat mode:", error);
@@ -357,7 +358,7 @@ export class SpotifyPlayer {
     this.shuffleState = !this.shuffleState; // Toggle shuffle state
     this.shuffleButton.setAttribute("data-state", this.shuffleState ? "active" : "inactive");
     // Update the shuffle state in Spotify
-    setShuffle(this.shuffleState).then(() => {
+    API.setShuffle(this.shuffleState).then(() => {
       console.log(`Shuffle mode set to: ${this.shuffleState}`);
     }).catch((error) => {
       console.error("Error setting shuffle mode:", error);
@@ -367,7 +368,7 @@ export class SpotifyPlayer {
 
   showDeviceSelection() {
     console.log("Showing device selection");
-    getAvailableDevices().then((devices) => {
+    API.getAvailableDevices().then((devices) => {
       console.log("Available devices:", devices);
       if (devices && devices.devices && devices.devices.length > 0) {
         console.log("Available devices:", devices);
@@ -395,7 +396,7 @@ export class SpotifyPlayer {
             if (!currentDeviceId) {
               return console.error("Device ID is required to transfer playback.");
             }
-            transferPlayback(`${currentDeviceId}`);
+            API.transferPlayback(`${currentDeviceId}`);
           });
           deviceList.appendChild(deviceItem);
         });
@@ -440,7 +441,7 @@ class PlaybackStatePoller {
   private async poll() {
     if (this.stopped) return; // return if polling is stopped
     try {
-      const state = await getPlaybackState();
+      const state = await API.getPlaybackState();
       // You can handle the state here, e.g. update UI or emit an event
       // Example: console.log("Playback state:", state);   
       console.log("Playback state:", state);
