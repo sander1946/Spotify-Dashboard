@@ -3,7 +3,7 @@ import { config } from "../config.js";
 
 export class SpotifyPlayer {
   // Properties
-  element: HTMLDivElement = document.createElement("div");
+  public element: HTMLDivElement = document.createElement("div");
   private poller: PlaybackStatePoller | null = null;
 
   // ** shadow elements
