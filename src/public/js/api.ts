@@ -4,7 +4,7 @@ export class API {
   // All interfaces remain public and outside the class
 
   // Spotify OAuth2/PKCE flow
-  static async redirectToSpotifyAuthorize(): Promise<void> {
+  public static async redirectToSpotifyAuthorize(): Promise<void> {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const randomValues = crypto.getRandomValues(new Uint8Array(64));
     const randomString = Array.from(randomValues).reduce((acc, x) => acc + possible[x % possible.length], "");
@@ -34,7 +34,7 @@ export class API {
     window.location.href = authUrl.toString();
   }
 
-  static async getToken(code: string): Promise<SpotifyTokenResponse> {
+  public static async getToken(code: string): Promise<SpotifyTokenResponse> {
     const code_verifier = localStorage.getItem('code_verifier') || '';
 
     const response = await fetch(config.tokenEndpoint, {
@@ -54,7 +54,7 @@ export class API {
     return await response.json();
   }
 
-  static async refreshToken(): Promise<SpotifyTokenResponse> {
+  public static async refreshToken(): Promise<SpotifyTokenResponse> {
     const response = await fetch(config.tokenEndpoint, {
       method: 'POST',
       headers: {
@@ -70,14 +70,8 @@ export class API {
     return await response.json();
   }
 
-  static async getUserData(): Promise<SpotifyUser | null> {
-    const response = await fetch("https://api.spotify.com/v1/me", {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
-    });
-
-    if (!response.ok) {
-      switch (response.status) {
+  private static async handleResponseError(response: Response, callback: CallableFunction): Promise<void> {
+    switch (response.status) {
         case 400:
           throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
         case 401:
@@ -88,7 +82,7 @@ export class API {
           }
           config.currentToken.save(newToken);
           // Retry the request with the new token
-          return API.getUserData();
+          return callback();
         case 403:
           throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
         case 404:
@@ -100,6 +94,16 @@ export class API {
         default:
           throw new Error(`Unexpected error: ${response.statusText}`);
       }
+  }
+
+  public static async getUserData(): Promise<SpotifyUser | null> {
+    const response = await fetch("https://api.spotify.com/v1/me", {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.getUserData.bind(API));
     }
     if (response.status === 204) {
       return null;
@@ -107,7 +111,7 @@ export class API {
     return await response.json();
   }
 
-  static async getPlaybackState(): Promise<SpotifyPlaybackState | null> {
+  public static async getPlaybackState(): Promise<SpotifyPlaybackState | null> {
     const URLParams = new URLSearchParams({
       market: 'NL',
       additional_types: 'track,episode',
@@ -121,27 +125,7 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getPlaybackState();
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getPlaybackState.bind(API));
     }
     if (response.status === 204) {
       return null;
@@ -149,7 +133,7 @@ export class API {
     return await response.json();
   }
 
-  static async transferPlayback(deviceId: string): Promise<void> {
+  public static async transferPlayback(deviceId: string): Promise<void> {
     const body = JSON.stringify({
       device_ids: [deviceId],
       play: true
@@ -165,58 +149,18 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.transferPlayback(deviceId);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.transferPlayback.bind(API, deviceId));
     }
   }
 
-  static async getAvailableDevices(): Promise<SpotifyAvailableDeviceObject | null> {
+  public static async getAvailableDevices(): Promise<SpotifyAvailableDeviceObject | null> {
     const response = await fetch("https://api.spotify.com/v1/me/player/devices", {
       method: 'GET',
       headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getAvailableDevices();
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getAvailableDevices.bind(API));
     }
     if (response.status === 204) {
       return null;
@@ -224,7 +168,7 @@ export class API {
     return await response.json();
   }
 
-  static async getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayingTrack | null> {
+  public static async getCurrentlyPlayingTrack(): Promise<SpotifyCurrentlyPlayingTrack | null> {
     const URLParams = new URLSearchParams({
       market: 'NL',
       additional_types: 'track,episode',
@@ -238,27 +182,7 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getCurrentlyPlayingTrack();
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getCurrentlyPlayingTrack.bind(API));
     }
     if (response.status === 204) {
       return null;
@@ -266,7 +190,7 @@ export class API {
     return await response.json();
   }
 
-  static async startResumePlayback(options: SpotifyPlaybackOptions): Promise<void> {
+  public static async startResumePlayback(options: SpotifyPlaybackOptions): Promise<void> {
     const body = JSON.stringify({
       context_uri: options.context_uri,
       uris: options.uris,
@@ -292,31 +216,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.startResumePlayback(options);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.startResumePlayback.bind(API, options));
     }
   }
 
-  static async pausePlayback(device_id: string | null = null): Promise<void> {
+  public static async pausePlayback(device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/pause";
     const URLParams = new URLSearchParams({});
 
@@ -333,31 +237,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.pausePlayback(device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.pausePlayback.bind(API, device_id));
     }
   }
 
-  static async skipToNext(device_id: string | null = null): Promise<void> {
+  public static async skipToNext(device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/next";
     const URLParams = new URLSearchParams({});
 
@@ -374,31 +258,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.skipToNext(device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.skipToNext.bind(API, device_id));
     }
   }
 
-  static async skipToPrevious(device_id: string | null = null): Promise<void> {
+  public static async skipToPrevious(device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/previous";
     const URLParams = new URLSearchParams({});
 
@@ -415,31 +279,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.skipToPrevious(device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.skipToPrevious.bind(API, device_id));
     }
   }
 
-  static async seekToPosition(position_ms: number, device_id: string | null = null): Promise<void> {
+  public static async seekToPosition(position_ms: number, device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/seek";
     const URLParams = new URLSearchParams({});
     if (position_ms < 0) {
@@ -461,31 +305,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.seekToPosition(position_ms, device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.seekToPosition.bind(API, position_ms, device_id));
     }
   }
 
-  static async setRepeatMode(state: string, device_id: string | null = null): Promise<void> {
+  public static async setRepeatMode(state: string, device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/repeat";
     const URLParams = new URLSearchParams({});
     URLParams.append('state', state);
@@ -504,31 +328,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.setRepeatMode(state, device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.setRepeatMode.bind(API, state, device_id));
     }
   }
 
-  static async setPlaybackVolume(volume_percent: number, device_id: string | null = null): Promise<void> {
+  public static async setPlaybackVolume(volume_percent: number, device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/volume";
     const URLParams = new URLSearchParams({});
     URLParams.append('volume_percent', volume_percent.toString());
@@ -547,31 +351,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.setPlaybackVolume(volume_percent, device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.setPlaybackVolume.bind(API, volume_percent, device_id));
     }
   }
 
-  static async setShuffle(state: boolean, device_id: string | null = null): Promise<void> {
+  public static async setShuffle(state: boolean, device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/shuffle";
     const URLParams = new URLSearchParams({});
     URLParams.append('state', state.toString());
@@ -590,31 +374,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.setShuffle(state, device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.setShuffle.bind(API, state, device_id));
     }
   }
 
-  static async getRecentlyPlayedTracks(limit: string = "50"): Promise<SpotifyRecentlyPlayedTrack | null> {
+  public static async getRecentlyPlayedTracks(limit: string = "50"): Promise<SpotifyRecentlyPlayedTrack | null> {
     let url = "https://api.spotify.com/v1/me/player/recently-played";
     const URLParams = new URLSearchParams({
       limit: limit,
@@ -628,27 +392,7 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getRecentlyPlayedTracks();
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getRecentlyPlayedTracks.bind(API, limit));
     }
     if (response.status === 204) {
       return null;
@@ -656,34 +400,14 @@ export class API {
     return await response.json();
   }
 
-  static async getUserQueue(): Promise<SpotifyUserQueue | null> {
+  public static async getUserQueue(): Promise<SpotifyUserQueue | null> {
     const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
       method: 'GET',
       headers: { 'Authorization': 'Bearer ' + config.currentToken.access_token },
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getUserQueue();
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getUserQueue.bind(API));
     }
     if (response.status === 204) {
       return null;
@@ -691,7 +415,7 @@ export class API {
     return await response.json();
   }
 
-  static async addItemToPlaybackQueue(uri: string, device_id: string | null = null): Promise<void> {
+  public static async addItemToPlaybackQueue(uri: string, device_id: string | null = null): Promise<void> {
     let url = "https://api.spotify.com/v1/me/player/queue";
     const URLParams = new URLSearchParams({});
     URLParams.append('uri', uri);
@@ -710,31 +434,11 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.addItemToPlaybackQueue(uri, device_id);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.addItemToPlaybackQueue.bind(API, uri, device_id));
     }
   }
 
-  static async getUsersTopItems(type: string, timeRange: string, limit: number, offset: number): Promise<SpotifyUserTopItems | null> {
+  public static async getUsersTopItems(type: string, timeRange: string, limit: number, offset: number): Promise<SpotifyUserTopItems | null> {
     let url = "https://api.spotify.com/v1/me/top/" + type;
     if (!['artists', 'tracks'].includes(type)) {
       throw new Error("Invalid type specified. Must be 'artists' or 'tracks'.");
@@ -763,27 +467,7 @@ export class API {
     });
 
     if (!response.ok) {
-      switch (response.status) {
-        case 400:
-          throw new Error("Bad request: The request was invalid or cannot be otherwise served.");
-        case 401:
-          const newToken = await API.refreshToken();
-          if (!newToken.access_token) {
-            throw new Error("Failed to refresh token");
-          }
-          config.currentToken.save(newToken);
-          return API.getUsersTopItems(type, timeRange, limit, offset);
-        case 403:
-          throw new Error("Bad request: Bad OAuth request, re-authenticateing won't help.");
-        case 404:
-          throw new Error("Not found: The requested resource could not be found.");
-        case 429:
-          throw new Error("Rate limit exceeded: Too many requests made to the API.");
-        case 500:
-          throw new Error("Internal server error: An error occurred on the server.");
-        default:
-          throw new Error(`Unexpected error: ${response.statusText}`);
-      }
+      await this.handleResponseError(response, API.getUsersTopItems.bind(null, type, timeRange, limit, offset));
     }
     if (response.status === 204) {
       return null;
