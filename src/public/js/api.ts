@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { SpotifyAvailableDeviceObject, SpotifyCurrentlyPlayingTrack, SpotifyPlaybackOptions, SpotifyPlaybackState, SpotifyRecentlyPlayedTrack, SpotifyTokenResponse, SpotifyUser, SpotifyUserQueue, SpotifyUserTopItems } from "./interfaces.js";
+import { SpotifyAvailableDeviceObject, SpotifyCurrentlyPlayingTrack, SpotifyPlaybackOptions, SpotifyPlaybackState, SpotifyPlaylistObject, SpotifyPlaylistTrackItem, SpotifyRecentlyPlayedTrack, SpotifyTokenResponse, SpotifyUser, SpotifyUserPlaylists, SpotifyUserQueue, SpotifyUserTopItems } from "./interfaces.js";
 export class API {
   // All interfaces remain public and outside the class
 
@@ -473,5 +473,192 @@ export class API {
       return null;
     }
     return await response.json();
+  }
+
+  public static async getUsersPlaylist(user_id: string, limit: number, offset: number): Promise<SpotifyUserPlaylists | null> {
+    let url = "https://api.spotify.com/v1/users/" + user_id + "/playlists";
+
+    const URLParams = new URLSearchParams({});
+    if (limit) {
+      URLParams.append('limit', limit.toString());
+    }
+
+    if (offset) {
+      URLParams.append('offset', offset.toString());
+    }
+
+    url += `?${URLParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.getUsersPlaylist.bind(null, user_id, limit, offset));
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    return await response.json();
+  }
+
+  public static async getCurrentUsersPlaylist(limit: number, offset: number): Promise<SpotifyUserPlaylists | null> {
+    let url = "https://api.spotify.com/v1/me/playlists";
+
+    const URLParams = new URLSearchParams({});
+    if (limit) {
+      URLParams.append('limit', limit.toString());
+    }
+
+    if (offset) {
+      URLParams.append('offset', offset.toString());
+    }
+
+    url += `?${URLParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.getCurrentUsersPlaylist.bind(null, limit, offset));
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    return await response.json();
+  }
+
+  public static async getPlaylist(playlist_id: string, market: string, fields: string, additional_types: string): Promise<SpotifyPlaylistObject | null> {
+    let url = "https://api.spotify.com/v1/playlists/" + playlist_id;
+
+    const URLParams = new URLSearchParams({});
+    if (market) {
+      URLParams.append('market', market);
+    }
+
+    if (fields) {
+      URLParams.append('fields', fields);
+    }
+
+    if (additional_types) {
+      URLParams.append('additional_types', additional_types);
+    }
+
+
+    url += `?${URLParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.getPlaylist.bind(null, playlist_id, market, fields, additional_types));
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    return await response.json();
+  }
+
+  public static async changePlaylistDetails(playlist_id: string, name: string, is_public: boolean, collaborative: boolean, description: string): Promise<void> {
+    let url = "https://api.spotify.com/v1/playlists/" + playlist_id;
+
+    const body = JSON.stringify({
+      name: name,
+      public: is_public,
+      collaborative: collaborative, // !! Works only on a non-public playlist
+      description: description
+    });
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+      body: body
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.changePlaylistDetails.bind(null, playlist_id, name, is_public, collaborative, description));
+    }
+    return;
+  }
+
+  public static async getPlaylistItems(playlist_id: string, market: string, fields: string, limit: number, offset: number, additional_types: string): Promise<SpotifyPlaylistTrackItem | null> {
+    let url = "https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks";
+
+    const URLParams = new URLSearchParams({});
+    if (market) {
+      URLParams.append('market', market);
+    }
+
+    if (limit) {
+      URLParams.append('limit', limit.toString());
+    }
+
+    if (offset) {
+      URLParams.append('offset', offset.toString());
+    }
+
+    if (fields) {
+      URLParams.append('fields', fields);
+    }
+
+    if (additional_types) {
+      URLParams.append('additional_types', additional_types);
+    }
+
+
+    url += `?${URLParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.getPlaylistItems.bind(null, playlist_id, market, fields, limit, offset, additional_types));
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    return await response.json();
+  }
+
+  public static async changePlaylistItems(playlist_id: string, uris: string, range_start: number, insert_before: number, range_length: number, snapshot_id: string): Promise<void> {
+    let url = "https://api.spotify.com/v1/playlists/" + playlist_id;
+
+    const body = JSON.stringify({
+      uris: uris.split(','),
+      range_start: range_start,
+      insert_before: insert_before,
+      range_length: range_length,
+      snapshot_id: snapshot_id
+    });
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + config.currentToken.access_token,
+      },
+      body: body
+    });
+
+    if (!response.ok) {
+      await this.handleResponseError(response, API.changePlaylistItems.bind(null, playlist_id, uris, range_start, insert_before, range_length, snapshot_id));
+    }
+    return;
   }
 }

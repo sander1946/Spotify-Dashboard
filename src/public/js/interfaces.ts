@@ -254,3 +254,51 @@ export interface SpotifyPlaybackOptions {
   position_ms?: number; // Optional, can be used to specify the position in milliseconds
   device_id?: string; // Optional, can be used to specify the device ID to play on
 }
+
+export interface SpotifyUserPlaylists {
+  href: string; // A link to the Web API endpoint returning the full result of the request
+  limit: number; // The maximum number of items in the response, as specified in the request.
+  next?: string; // The URL to the next page of items. If this is null, there are no more items.
+  offset: number; // The offset of the items returned in the response, as specified in the request.
+  previous?: string; // The URL to the previous page of items. If this is null, there are no previous items.
+  total: number; // The total number of items available in the response.
+  items: SpotifyPlaylistObject[]; // An array of playlists owned or followed by the user.
+}
+
+export interface SpotifyPlaylistObject {
+  collaborative: boolean; // If the playlist is collaborative.
+  description: string; // The description of the playlist.
+  external_urls: SpotifyExternalUrlObject; // External URLs for this playlist.
+  href: string; // A link to the Web API endpoint providing full details of the playlist.
+  id: string; // The Spotify ID for the playlist.
+  images: SpotifyImageObject[]; // The cover art for the playlist in various sizes, widest first.
+  name: string; // The name of the playlist.
+  owner: SpotifyUser; // The owner of the playlist.
+  public: boolean | null; // If the playlist is public. Null if not available.
+  snapshot_id: string; // A unique identifier for the current state of the playlist.
+  tracks?: SpotifyPlaylistTrackObject; // The tracks in the playlist.
+  type: string; // The object type, e.g. "playlist".
+  uri: string; // The Spotify URI for the playlist.
+}
+
+export interface SpotifyPlaylistTrackObject {
+  href: string; // A link to the Web API endpoint providing full details of the tracks in the playlist.
+  total: number; // The total number of tracks in the playlist.
+}
+
+export interface SpotifyPlaylistTrackItem {
+  href: string; // A link to the Web API endpoint providing full details of the track.
+  limit: number // The maximum number of items in the response, as specified in the request.
+  next?: string; // The URL to the next page of items. If this is null, there are no more items.
+  offset: number; // The offset of the items returned in the response, as specified in the request.
+  previous?: string; // The URL to the previous page of items. If this is null, there are no previous items.
+  total: number; // The total number of items available in the response.
+  items: SpotifyPlaylistTrackItemObject[]; // An array of tracks in the playlist.
+}
+
+export interface SpotifyPlaylistTrackItemObject {
+  added_at: string; // The date and time when the track was added to the playlist, in ISO 8601 format.
+  added_by: SpotifyUser | null; // The user who added the track to the playlist.
+  is_local: boolean; // If the track is local to the user's device.
+  track: SpotifyTrackObject | SpotifyEpisodeObject; // The track object containing details about the track.
+}
